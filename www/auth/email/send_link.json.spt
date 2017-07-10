@@ -1,0 +1,36 @@
+from aspen import Response
+
+from gratipay.models.participant import Participant
+from gratipay.security.authentication.email import create_signin_nonce
+from gratipay.utils import encode_for_querystring
+
+[---]
+
+request.allow("POST")
+
+if "email_address" not in request.body:
+    raise Response(400, "no 'email_address' in body")
+
+email_address = request.body["email_address"]
+
+participant = Participant.from_email(email_address)
+
+if participant:
+    nonce = create_signin_nonce(website.db, email_address)
+    encoded_email = encode_for_querystring(email_address)
+    signin_link = "%s/auth/email/verify.html?nonce=%s&email=%s" % (website.base_url, nonce, encoded_email)
+
+    website.app.email_queue.put( participant
+                               , "signin_link"
+                               , _user_initiated=True
+                               , include_unsubscribe=False
+                               , email=email_address
+                               , signin_link=signin_link
+                                )
+    message = _("We've sent you a link to sign in. Please check your inbox.")
+else:
+    # TODO: Create sign-up link!
+    raise Response(400, "no participant exists by this address")
+
+[---] application/json via json_dump
+{"message": message}
