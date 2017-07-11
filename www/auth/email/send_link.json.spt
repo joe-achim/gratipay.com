@@ -30,7 +30,7 @@ if participant:
     message = _("We've sent you a link to sign in. Please check your inbox.")
 else:
     # TODO: Create sign-up link!
-    raise Response(400, "no participant exists by this address")
+    raise Response(400, _("No user found by this address. Sign-up via email not implemented yet, stay tuned."))
 
 [---] application/json via json_dump
 {"message": message}
