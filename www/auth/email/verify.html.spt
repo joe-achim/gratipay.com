@@ -1,0 +1,48 @@
+from aspen import Response
+
+from gratipay.security.authentication.email import verify_nonce, invalidate_nonce
+from gratipay.security.authentication.email import NONCE_VALID, NONCE_INVALID, NONCE_EXPIRED
+from gratipay.utils import decode_from_querystring
+from gratipay.security.user import User
+
+[---]
+
+if 'nonce' not in request.qs:
+    raise Response(400, '`nonce` parameter must be provided')
+
+if 'email' not in request.qs:
+    raise Response(400, '`email` parameter must be provided')
+
+email = decode_from_querystring(request.qs['email'])
+nonce = request.qs['nonce']
+
+result = verify_nonce(website.db, email, nonce)
+
+if result == NONCE_VALID:
+    _user = User.from_email(email) # '_user' to avoid conflict with 'user' in template
+    _user.sign_in(response.headers.cookie) # TODO: What if user is already signed in?
+    invalidate_nonce(website.db, email, nonce)
+    website.redirect("/", response=response) # TODO: Why should response be passed?
+else:
+    suppress_sidebar = True
+
+[---] text/html via jinja2
+{% extends "templates/base.html" %}
+{% block content %}
+    {% if result == NONCE_EXPIRED %}
+        <h1>{{ _("Link expired") }}</h1>
+        <p>{{ _( "This link has expired. Please generate a new one.") }}</p>
+        {# TODO: Add form for email right here? #}
+    {% else %} {# NONCE_INVALID #}
+        <h1>{{ _("Bad Info") }}</h1>
+        <p>
+            {{ _( "Sorry, that's a bad link.") }}
+
+            <br/><br/>
+
+            {{ _("If you think this is a mistake, please contact {a}support@gratipay.com.{_a}"
+                , a=('<a href="mailto:support@gratipay.com">'|safe)
+                , _a='</a>'|safe) }}
+        </p>
+    {% endif %}
+{% endblock %}

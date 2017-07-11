@@ -35,6 +35,12 @@ class User(object):
         return cls(Participant.from_id(userid))
 
     @classmethod
+    def from_email(cls, email):
+        """Find a participant based on id and return a User.
+        """
+        return cls(Participant.from_email(email))
+
+    @classmethod
     def from_username(cls, username):
         """Find a participant based on username and return a User.
         """
